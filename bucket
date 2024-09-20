@@ -1,0 +1,30 @@
+#!/bin/bash
+
+# Path to the file containing bucket names with quotes
+BUCKET_FILE="bucket.txt"
+
+# Check if the file exists
+if [[ ! -f "$BUCKET_FILE" ]]; then
+  echo "Bucket file $BUCKET_FILE not found!"
+  exit 1
+fi
+
+# Loop through each bucket in the file
+while IFS= read -r bucket; do
+  # Remove quotes from the bucket name
+  bucket=$(echo "$bucket" | tr -d '"')
+  
+  # Check if bucket is not empty after removing quotes
+  if [[ -n "$bucket" ]]; then
+    echo "Fetching stats for bucket: $bucket"
+    
+    # Run the radosgw-admin command and extract the num_object
+    num_object=$(radosgw-admin bucket stats --bucket="$bucket" | grep "num_objects")
+    
+    if [[ -n "$num_object" ]]; then
+      echo "$bucket: $num_object"
+    else
+      echo "Failed to get stats for bucket: $bucket"
+    fi
+  fi
+done < "$BUCKET_FILE"
